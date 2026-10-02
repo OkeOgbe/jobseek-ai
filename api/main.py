@@ -2,13 +2,16 @@ from fastapi import FastAPI
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from fastapi import HTTPException
-from tools import fetch_jobs
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from tools import recommend_jobs
 import requests
 import json
 import re
+
+try:
+    from .tools import fetch_jobs, recommend_jobs
+except ImportError:
+    from tools import fetch_jobs, recommend_jobs
 
 load_dotenv()
 
