@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import requests
 import json
-import re
 
 try:
     from .tools import fetch_jobs, recommend_jobs
