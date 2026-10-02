@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f0">
+  <title>NextStep | Resume analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.9.0/mammoth.browser.min.js" defer></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202a25;
+      --muted: #748079;
+      --line: #dce2db;
+      --paper: #f3f5f0;
+      --surface: #fff;
+      --green: #285d48;
+      --lime: #d5f276;
+      --coral: #e9896b;
+      font-family: "DM Sans", "Avenir Next", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; }
+    button, input { font: inherit; }
+    .topbar {
+      height: 76px; padding: 0 clamp(20px, 5vw, 76px); display: flex;
+      align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .58);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 16px; font-weight: 700; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px 9px 9px 3px; color: var(--ink); background: var(--lime); }
+    .brand-mark svg { width: 18px; height: 18px; }
+    .topbar-label { color: var(--muted); font-size: 13px; }
+    main { width: min(1160px, calc(100% - 40px)); margin: 0 auto; padding: 58px 0 76px; }
+    .intro { margin-bottom: 34px; animation: rise .45s ease-out both; }
+    .eyebrow { margin: 0 0 12px; color: var(--green); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    h1 { margin: 0; font-family: "DM Serif Display", Georgia, serif; font-size: clamp(34px, 5vw, 48px); font-weight: 400; line-height: 1.1; }
+    .intro-copy { margin: 11px 0 0; color: var(--muted); font-size: 15px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); border: 1px solid var(--line); background: var(--surface); animation: rise .55s .08s ease-out both; }
+    .upload-panel, .result-panel { min-width: 0; padding: clamp(22px, 4vw, 40px); height: 50vh; overflow-y: scroll; }
+    .upload-panel { border-right: 1px solid var(--line); }
+    .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
+    .step { width: 29px; height: 29px; display: grid; place-items: center; flex: none; border-radius: 50%; background: var(--green); color: white; font-size: 12px; font-weight: 700; }
+    h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .dropzone { min-height: 252px; padding: 26px 18px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 1px dashed #aebbb0; background: #f8faf6; cursor: pointer; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+    .dropzone:hover, .dropzone.is-over { border-color: var(--green); background: #f1f7ed; }
+    .dropzone.is-over { transform: scale(1.01); }
+    .upload-icon { width: 46px; height: 46px; margin-bottom: 16px; display: grid; place-items: center; border-radius: 14px; background: #e5eee4; color: var(--green); }
+    .upload-icon svg { width: 23px; height: 23px; }
+    .drop-title { margin: 0; font-size: 15px; font-weight: 700; }
+    .drop-copy { margin: 7px 0 15px; color: var(--muted); font-size: 13px; }
+    .browse { padding: 9px 14px; border: 1px solid #c8d3c9; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .browse:hover { border-color: var(--green); }
+    .file-types { margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+    .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+    .file-name { max-width: 100%; margin: 0 0 13px; overflow: hidden; color: var(--green); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .submit { width: 100%; min-height: 48px; margin-top: 20px; padding: 12px 18px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: var(--green); color: white; font-weight: 700; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+    .submit:hover:not(:disabled) { background: #1e4938; transform: translateY(-1px); }
+    .submit:disabled { cursor: not-allowed; opacity: .48; }
+    .submit svg { width: 17px; height: 17px; }
+    .privacy { margin: 14px 0 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .privacy svg { width: 14px; height: 14px; color: var(--green); flex: none; }
+    .result-panel { display: flex; flex-direction: column; }
+    .result-panel .section-head { margin-bottom: 21px; }
+    .result-content { flex: 1; min-height: 360px; padding: 22px; background: #f7f8f5; }
+    .empty-state { height: 100%; min-height: 310px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    .empty-state[hidden] { display: none; }
+    .orbit { width: 96px; height: 96px; margin-bottom: 20px; position: relative; display: grid; place-items: center; border: 1px solid #d9e1d8; border-radius: 50%; }
+    .orbit::before, .orbit::after { content: ""; position: absolute; border: 1px solid #e1e7e0; border-radius: 50%; }
+    .orbit::before { inset: 10px; }
+    .orbit::after { width: 12px; height: 12px; top: 6px; right: 7px; border: 0; background: var(--coral); }
+    .orbit svg { width: 29px; height: 29px; color: var(--green); }
+    .empty-state h3 { margin: 0; font-size: 15px; }
+    .empty-state p { max-width: 260px; margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .results { display: none; }
+    .results.is-visible { display: block; animation: rise .3s ease-out both; }
+    .result-block + .result-block { margin-top: 24px; padding-top: 21px; border-top: 1px solid var(--line); }
+    .result-block h3 { margin: 0 0 10px; color: var(--green); font-size: 12px; text-transform: uppercase; }
+    .result-block p { margin: 0; color: #35423a; font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .skills-list { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; color: #35423a; font-size: 14px; line-height: 1.7; }
+    .skills-list li + li { margin-top: 3px; }
+    .job-list { display: grid; gap: 12px; }
+    .job-card { padding: 14px; border: 1px solid var(--line); background: var(--surface); }
+    .job-card h4 { margin: 0; font-size: 14px; line-height: 1.4; }
+    .job-company { margin: 5px 0 0; color: var(--green); font-size: 12px; font-weight: 600; }
+    .job-location { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .job-snippet { margin: 9px 0 0; color: #46524a; font-size: 12px; line-height: 1.55; }
+    .job-apply { min-height: 36px; margin-top: 12px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--green); background: var(--green); color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .job-apply:hover { background: #1e4938; }
+    .job-apply svg { width: 14px; height: 14px; }
+    .status { min-height: 20px; margin: 11px 0 0; color: #a24034; font-size: 12px; }
+    .status:empty { display: none; }
+    .loading { display: none; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .loading.is-visible { display: flex; }
+    .spinner { width: 16px; height: 16px; border: 2px solid #d9e3d8; border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 760px) { main { padding-top: 39px; } .workspace { grid-template-columns: 1fr; } .upload-panel { border-right: 0; border-bottom: 1px solid var(--line); } .result-content { min-height: 280px; } .empty-state { min-height: 230px; } }
+    @media (max-width: 420px) { .skills-list { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17 11 5l3 7 2-4 3 9"/><path d="M4 20h16"/></svg></span><span>nextstep</span></div>
+    <span class="topbar-label">Career workspace&nbsp; / &nbsp;Resume</span>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">Career workspace&nbsp; / &nbsp;01</p>
+      <h1 id="page-title">Resume analysis</h1>
+      <p class="intro-copy">Start with your experience. Find the roles that fit what you do best.</p>
+    </section>
+
+    <form class="workspace" id="resume-form">
+      <section class="upload-panel" aria-labelledby="upload-heading">
+        <div class="section-head"><span class="step" aria-hidden="true">01</span><h2 id="upload-heading">Add your resume</h2></div>
+        <input class="file-input" id="resume-file" type="file" name="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
+        <label class="dropzone" id="dropzone" for="resume-file" tabindex="0">
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg></span>
+          <p class="drop-title">Drop your resume here</p><p class="drop-copy">or choose a file from your device</p>
+          <span class="file-name" id="file-name" hidden></span><span class="browse">Browse files</span>
+          <span class="file-types">PDF, DOCX or TXT&nbsp; · &nbsp;up to 10 MB</span>
+        </label>
+        <button class="submit" id="submit-button" type="submit" disabled><span>Analyze resume</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <p class="status" id="status" role="alert" aria-live="polite"></p>
+        <p class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>Your resume text is sent to the analysis API.</p>
+      </section>
+
+      <section class="result-panel" aria-labelledby="result-heading">
+        <div class="section-head"><span class="step" aria-hidden="true">02</span><h2 id="result-heading">Your career matches</h2></div>
+        <div class="result-content" aria-live="polite" aria-busy="false" id="result-content">
+          <div class="empty-state" id="empty-state"><div class="orbit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4M11 8v6M8 11h6"/></svg></div><h3>A clearer picture of your next step</h3><p>Your skills and tailored role recommendations will appear here.</p></div>
+          <div class="loading" id="loading" role="status"><span class="spinner" aria-hidden="true"></span>Reading your resume and finding role matches…</div>
+          <div class="results" id="results"><section class="result-block"><h3>Skills</h3><ul class="skills-list" id="skills"></ul></section><section class="result-block"><h3>Experience</h3><p id="experience"></p></section><section class="result-block"><h3>Jooble postings</h3><div class="job-list" id="job-list"></div></section><section class="result-block"><h3>Recommended roles</h3><p id="recommendations"></p></section></div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    const form = document.querySelector("#resume-form");
+    const fileInput = document.querySelector("#resume-file");
+    const dropzone = document.querySelector("#dropzone");
+    const fileName = document.querySelector("#file-name");
+    const submitButton = document.querySelector("#submit-button");
+    const status = document.querySelector("#status");
+    const resultContent = document.querySelector("#result-content");
+    const emptyState = document.querySelector("#empty-state");
+    const loading = document.querySelector("#loading");
+    const results = document.querySelector("#results");
+    const allowedExtensions = new Set(["pdf", "docx", "txt"]);
+    const maxFileSize = 10 * 1024 * 1024;
+
+    function parseSkills(value) {
+      if (Array.isArray(value)) return value.map(String).map((skill) => skill.trim()).filter(Boolean);
+      if (typeof value !== "string" || !value.trim()) return [];
+
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed.map(String).map((skill) => skill.trim()).filter(Boolean);
+        if (parsed && Array.isArray(parsed.skills)) return parsed.skills.map(String).map((skill) => skill.trim()).filter(Boolean);
+      } catch {
+        return value.split(/[\n,]/).map((skill) => skill.trim()).filter(Boolean);
+      }
+
+      return [value.trim()];
+    }
+
+    function formatExperience(value) {
+      if (typeof value === "string") return value.trim();
+      if (Array.isArray(value)) return value.map(String).join("\n");
+      if (value && typeof value === "object") {
+        const summary = value.summary ?? value.description ?? value.text;
+        return typeof summary === "string" ? summary : JSON.stringify(value, null, 2);
+      }
+      return value == null ? "" : String(value);
+    }
+
+    function formatJobDescription(value) {
+      if (typeof value !== "string" || !value.trim()) return "";
+
+      let parsed = new DOMParser().parseFromString(value, "text/html");
+      let text = parsed.body.textContent || "";
+      if (/<\/?[a-z][^>]*>/i.test(text)) {
+        parsed = new DOMParser().parseFromString(text, "text/html");
+        text = parsed.body.textContent || "";
+      }
+
+      return text
+        .replace(/\u00a0/g, " ")
+        .replace(/(?:\s*\.\.\.){2,}/g, " ... ")
+        .replace(/\s+([,.;:])/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function setFile(file) {
+      status.textContent = "";
+      if (!file) {
+        fileInput.value = "";
+        fileName.hidden = true;
+        submitButton.disabled = true;
+        return;
+      }
+      const extension = file.name.split(".").pop().toLowerCase();
+      if (!allowedExtensions.has(extension)) {
+        status.textContent = "Choose a PDF, DOCX, or TXT file.";
+        fileInput.value = "";
+        fileName.hidden = true;
+        submitButton.disabled = true;
+        return;
+      }
+      if (file.size > maxFileSize) {
+        status.textContent = "The file must be 10 MB or smaller.";
+        fileInput.value = "";
+        fileName.hidden = true;
+        submitButton.disabled = true;
+        return;
+      }
+      fileName.textContent = file.name;
+      fileName.hidden = false;
+      submitButton.disabled = false;
+    }
+
+    async function extractResumeText(file) {
+      const extension = file.name.split(".").pop().toLowerCase();
+      if (extension === "txt") return file.text();
+      if (extension === "pdf") {
+        if (!window.pdfjsLib) throw new Error("PDF reader did not load. Check your connection and refresh the page.");
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        const pages = await Promise.all(Array.from({ length: pdf.numPages }, async (_, index) => {
+          const page = await pdf.getPage(index + 1);
+          const content = await page.getTextContent();
+          return content.items.map((item) => "str" in item ? item.str : "").join(" ");
+        }));
+        return pages.join("\n");
+      }
+      if (extension === "docx") {
+        if (!window.mammoth) throw new Error("DOCX reader did not load. Check your connection and refresh the page.");
+        const result = await window.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+        return result.value;
+      }
+      throw new Error("Choose a PDF, DOCX, or TXT file.");
+    }
+
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+    dropzone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    for (const eventName of ["dragenter", "dragover"]) {
+      dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.add("is-over");
+      });
+    }
+    for (const eventName of ["dragleave", "drop"]) {
+      dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("is-over");
+      });
+    }
+    dropzone.addEventListener("drop", (event) => {
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      fileInput.files = transfer.files;
+      setFile(file);
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const file = fileInput.files[0];
+      if (!file) return;
+      status.textContent = "";
+      submitButton.disabled = true;
+      emptyState.hidden = true;
+      results.classList.remove("is-visible");
+      loading.classList.add("is-visible");
+      resultContent.setAttribute("aria-busy", "true");
+      try {
+        const resumeText = await extractResumeText(file);
+        if (!resumeText.trim()) throw new Error("No readable text was found in this file.");
+        const response = await fetch("/analyze_resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ file: resumeText })
+        });
+        let payload;
+        try {
+          payload = await response.json();
+        } catch {
+          throw new Error("The API response was not valid JSON.");
+        }
+        if (!response.ok) throw new Error(payload.detail || "The resume could not be analyzed.");
+        if (!payload || typeof payload !== "object") throw new Error("The request reached the API, but it returned no analysis. Check that the backend returns analysis and recommendations.");
+        const skillsList = document.querySelector("#skills");
+        skillsList.replaceChildren();
+        const skills = parseSkills(payload.skills);
+        if (skills.length === 0) skills.push("No skills were returned.");
+        for (const skill of skills) {
+          const item = document.createElement("li");
+          item.textContent = skill;
+          skillsList.append(item);
+        }
+        document.querySelector("#experience").textContent = formatExperience(payload.experience) || "No experience summary was returned.";
+        document.querySelector("#recommendations").textContent = payload.recommendations ?? "No role recommendations were returned.";
+        const jobList = document.querySelector("#job-list");
+        jobList.replaceChildren();
+        const jobs = Array.isArray(payload.jobs?.jobs) ? payload.jobs.jobs : [];
+        if (jobs.length === 0) {
+          const noJobs = document.createElement("p");
+          noJobs.className = "job-snippet";
+          noJobs.textContent = "Jooble returned no matching postings.";
+          jobList.append(noJobs);
+        }
+        for (const job of jobs) {
+          const card = document.createElement("article");
+          card.className = "job-card";
+
+          const title = document.createElement("h4");
+          title.textContent = job.title || "Untitled position";
+          card.append(title);
+
+          const postingUrl = job.link || job.url;
+          let validPostingUrl = "";
+          try {
+            const parsedUrl = new URL(postingUrl);
+            if (["http:", "https:"].includes(parsedUrl.protocol)) validPostingUrl = parsedUrl.href;
+          } catch {
+            validPostingUrl = "";
+          }
+          if (validPostingUrl) {
+            const applyButton = document.createElement("button");
+            applyButton.className = "job-apply";
+            applyButton.type = "button";
+            applyButton.append(document.createTextNode("Apply"));
+            const externalIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            externalIcon.setAttribute("viewBox", "0 0 24 24");
+            externalIcon.setAttribute("fill", "none");
+            externalIcon.setAttribute("stroke", "currentColor");
+            externalIcon.setAttribute("stroke-width", "1.8");
+            externalIcon.setAttribute("stroke-linecap", "round");
+            externalIcon.setAttribute("stroke-linejoin", "round");
+            externalIcon.setAttribute("aria-hidden", "true");
+            externalIcon.innerHTML = '<path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v6a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/>';
+            applyButton.append(externalIcon);
+            applyButton.addEventListener("click", () => window.open(validPostingUrl, "_blank", "noopener,noreferrer"));
+            card.append(applyButton);
+          }
+
+          if (job.company) {
+            const company = document.createElement("p");
+            company.className = "job-company";
+            company.textContent = job.company;
+            card.append(company);
+          }
+          if (job.location) {
+            const location = document.createElement("p");
+            location.className = "job-location";
+            location.textContent = job.location;
+            card.append(location);
+          }
+          const jobDescription = job.snippet || job.description;
+          if (jobDescription) {
+            const snippet = document.createElement("p");
+            snippet.className = "job-snippet";
+            snippet.textContent = formatJobDescription(jobDescription);
+            card.append(snippet);
+          }
+          jobList.append(card);
+        }
+        results.classList.add("is-visible");
+      } catch (error) {
+        emptyState.hidden = false;
+        status.textContent = error instanceof TypeError
+          ? "Could not reach the API. Check its address and whether cross-origin requests are enabled."
+          : error.message;
+      } finally {
+        loading.classList.remove("is-visible");
+        resultContent.setAttribute("aria-busy", "false");
+        submitButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
