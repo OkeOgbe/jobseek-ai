@@ -84,10 +84,23 @@
     .result-block + .result-block { margin-top: 24px; padding-top: 21px; border-top: 1px solid var(--line); }
     .result-block h3 { margin: 0 0 10px; color: var(--green); font-size: 12px; text-transform: uppercase; }
     .result-block p { margin: 0; color: #35423a; font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .block-head { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .block-head h3 { margin: 0; }
+    .copy-button { min-height: 32px; padding: 6px 11px; display: inline-flex; align-items: center; gap: 7px; flex: none; border: 1px solid #c8d3c9; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .18s ease, color .18s ease; }
+    .copy-button:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+    .copy-button:disabled { cursor: not-allowed; opacity: .48; }
+    .copy-button.is-copied { border-color: var(--green); color: var(--green); }
+    .copy-button svg { width: 14px; height: 14px; }
+    .cover-letter { padding: 16px; border: 1px solid var(--line); background: var(--surface); }
     .skills-list { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; color: #35423a; font-size: 14px; line-height: 1.7; }
     .skills-list li + li { margin-top: 3px; }
     .job-list { display: grid; gap: 12px; }
     .job-card { padding: 14px; border: 1px solid var(--line); background: var(--surface); }
+    .job-pager { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .job-pager[hidden] { display: none; }
+    .job-count { margin: 0; color: var(--muted); font-size: 12px; }
+    .show-more { min-height: 36px; padding: 8px 14px; border: 1px solid #c8d3c9; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .18s ease, color .18s ease; }
+    .show-more:hover { border-color: var(--green); color: var(--green); }
     .job-card h4 { margin: 0; font-size: 14px; line-height: 1.4; }
     .job-company { margin: 5px 0 0; color: var(--green); font-size: 12px; font-weight: 600; }
     .job-location { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
@@ -138,9 +151,9 @@
       <section class="result-panel" aria-labelledby="result-heading">
         <div class="section-head"><span class="step" aria-hidden="true">02</span><h2 id="result-heading">Your career matches</h2></div>
         <div class="result-content" aria-live="polite" aria-busy="false" id="result-content">
-          <div class="empty-state" id="empty-state"><div class="orbit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4M11 8v6M8 11h6"/></svg></div><h3>A clearer picture of your next step</h3><p>Your skills and tailored role recommendations will appear here.</p></div>
+          <div class="empty-state" id="empty-state"><div class="orbit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4M11 8v6M8 11h6"/></svg></div><h3>A clearer picture of your next step</h3><p>Your skills, cover letter and matching roles will appear here.</p></div>
           <div class="loading" id="loading" role="status"><span class="spinner" aria-hidden="true"></span>Reading your resume and finding role matches…</div>
-          <div class="results" id="results"><section class="result-block"><h3>Skills</h3><ul class="skills-list" id="skills"></ul></section><section class="result-block"><h3>Experience</h3><p id="experience"></p></section><section class="result-block"><h3>Jooble postings</h3><div class="job-list" id="job-list"></div></section><section class="result-block"><h3>Recommended roles</h3><p id="recommendations"></p></section></div>
+          <div class="results" id="results"><section class="result-block"><h3>Skills</h3><ul class="skills-list" id="skills"></ul></section><section class="result-block"><h3>Experience</h3><p id="experience"></p></section><section class="result-block"><div class="block-head"><h3>Cover letter</h3><button class="copy-button" id="copy-cover-letter" type="button" aria-label="Copy cover letter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span>Copy</span></button></div><p class="cover-letter" id="cover-letter"></p></section><section class="result-block"><h3>Jooble postings</h3><div class="job-list" id="job-list"></div><div class="job-pager" id="job-pager" hidden><p class="job-count" id="job-count" aria-live="polite"></p><button class="show-more" id="show-more-jobs" type="button">Show more</button></div></section><section class="result-block"><h3>Higher-paying career options</h3><p id="career-options"></p></section></div>
         </div>
       </section>
     </form>
@@ -157,6 +170,16 @@
     const emptyState = document.querySelector("#empty-state");
     const loading = document.querySelector("#loading");
     const results = document.querySelector("#results");
+    const coverLetter = document.querySelector("#cover-letter");
+    const copyCoverLetterButton = document.querySelector("#copy-cover-letter");
+    const copyCoverLetterLabel = copyCoverLetterButton.querySelector("span");
+    let copyResetTimer;
+    const jobPager = document.querySelector("#job-pager");
+    const jobCount = document.querySelector("#job-count");
+    const showMoreJobsButton = document.querySelector("#show-more-jobs");
+    const jobsPageSize = 5;
+    let jobCards = [];
+    let visibleJobCount = jobsPageSize;
     const allowedExtensions = new Set(["pdf", "docx", "txt"]);
     const maxFileSize = 10 * 1024 * 1024;
 
@@ -253,6 +276,57 @@
       throw new Error("Choose a PDF, DOCX, or TXT file.");
     }
 
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+      // Fallback for plain-http hosts where the Clipboard API is unavailable
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) throw new Error("Copy failed");
+    }
+
+    copyCoverLetterButton.addEventListener("click", async () => {
+      clearTimeout(copyResetTimer);
+      try {
+        await copyText(coverLetter.textContent);
+        copyCoverLetterLabel.textContent = "Copied";
+        copyCoverLetterButton.classList.add("is-copied");
+      } catch {
+        copyCoverLetterLabel.textContent = "Copy failed";
+      }
+      copyResetTimer = setTimeout(() => {
+        copyCoverLetterLabel.textContent = "Copy";
+        copyCoverLetterButton.classList.remove("is-copied");
+      }, 2000);
+    });
+
+    function updateJobPager() {
+      jobCards.forEach((card, index) => { card.hidden = index >= visibleJobCount; });
+      jobPager.hidden = jobCards.length <= jobsPageSize;
+      const shown = Math.min(visibleJobCount, jobCards.length);
+      jobCount.textContent = `Showing ${shown} of ${jobCards.length} postings`;
+      showMoreJobsButton.textContent = shown < jobCards.length ? "Show more" : "Show less";
+    }
+
+    showMoreJobsButton.addEventListener("click", () => {
+      if (visibleJobCount < jobCards.length) {
+        const firstNewCard = jobCards[visibleJobCount];
+        visibleJobCount += jobsPageSize;
+        updateJobPager();
+        firstNewCard.querySelector("h4").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } else {
+        visibleJobCount = jobsPageSize;
+        updateJobPager();
+        document.querySelector("#job-list").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
     fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
     dropzone.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -306,7 +380,7 @@
           throw new Error("The API response was not valid JSON.");
         }
         if (!response.ok) throw new Error(payload.detail || "The resume could not be analyzed.");
-        if (!payload || typeof payload !== "object") throw new Error("The request reached the API, but it returned no analysis. Check that the backend returns analysis and recommendations.");
+        if (!payload || typeof payload !== "object") throw new Error("The request reached the API, but it returned no analysis. Check that the backend returns the analysis.");
         const skillsList = document.querySelector("#skills");
         skillsList.replaceChildren();
         const skills = parseSkills(payload.skills);
@@ -317,9 +391,14 @@
           skillsList.append(item);
         }
         document.querySelector("#experience").textContent = formatExperience(payload.experience) || "No experience summary was returned.";
-        document.querySelector("#recommendations").textContent = payload.recommendations ?? "No role recommendations were returned.";
+        const coverLetterText = typeof payload.cover_letter === "string" ? payload.cover_letter.trim() : "";
+        coverLetter.textContent = coverLetterText || "No cover letter was returned.";
+        copyCoverLetterButton.disabled = !coverLetterText;
+        document.querySelector("#career-options").textContent = payload.career_options ?? "No career options were returned.";
         const jobList = document.querySelector("#job-list");
         jobList.replaceChildren();
+        jobCards = [];
+        visibleJobCount = jobsPageSize;
         const jobs = Array.isArray(payload.jobs?.jobs) ? payload.jobs.jobs : [];
         if (jobs.length === 0) {
           const noJobs = document.createElement("p");
@@ -382,7 +461,9 @@
             card.append(snippet);
           }
           jobList.append(card);
+          jobCards.push(card);
         }
+        updateJobPager();
         results.classList.add("is-visible");
       } catch (error) {
         emptyState.hidden = false;
