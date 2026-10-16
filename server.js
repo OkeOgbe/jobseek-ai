@@ -2,7 +2,7 @@ const http = require("node:http");
 const { readFile } = require("node:fs/promises");
 const path = require("node:path");
 
-const frontendDirectory = __dirname;
+const frontendDirectory = path.join(__dirname, "public");
 const apiOrigin = (process.env.API_ORIGIN || "http://127.0.0.1:8000").replace(/\/$/, "");
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "0.0.0.0";

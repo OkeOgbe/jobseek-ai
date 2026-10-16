@@ -151,6 +151,7 @@ def analyze_resume(resume: Resume):
         "jobs": {"jobs": jobs},
     }
 
-@app.get("/")
+# Kept off "/" so it doesn't shadow public/index.html on Vercel
+@app.get("/health")
 def read_root():
     return {"message": "Welcome to the Job Recommendation API. Use the /analyze_resume endpoint to analyze a resume and get personalized job recommendations."}

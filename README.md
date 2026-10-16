@@ -19,7 +19,11 @@ Open <http://127.0.0.1:5173>. Locally, the Node server proxies `POST /analyze_re
 
 ## Deploy to Vercel
 
-Deploy the repository root as one project. Vercel detects the root `main.py` FastAPI entrypoint, and the root `requirements.txt` declares Python dependencies. The frontend posts to the same-origin `/analyze_resume` path, so the deployed request goes directly to the FastAPI app; do not set `API_ORIGIN` to the Vercel project's own URL.
+Deploy the repository root as one project with the **FastAPI** framework preset (Project Settings → Build and Deployment → Framework Preset). Vercel uses the root `main.py` FastAPI entrypoint, and the root `requirements.txt` declares Python dependencies. The frontend lives in `public/`, which Vercel serves from its CDN at `/`.
+
+Without the FastAPI preset, Vercel treats every `.py` file in `api/` as a separate function served at its file path (`/api/main`), so `/analyze_resume` returns 404.
+
+The frontend posts to the same-origin `/analyze_resume` path, so the deployed request goes directly to the FastAPI app; do not set `API_ORIGIN` to the Vercel project's own URL.
 
 Set these environment variables in Vercel Project Settings:
 
