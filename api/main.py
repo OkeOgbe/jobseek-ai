@@ -9,8 +9,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import requests
-import json
-import re
+import asyncio
 
 try:
     from .tools import fetch_jobs, recommend_jobs
@@ -46,7 +45,7 @@ def search_jobs(search: JobSearch):
 
 
 @app.post("/analyze_resume")
-def analyze_resume(resume: Resume):
+async def analyze_resume(resume: Resume):
 
     print("Analyzing resume file and extracting relevant information...")
 
@@ -82,7 +81,7 @@ def analyze_resume(resume: Resume):
 
     final_chain = RunnablePassthrough.assign(profile=extraction_chain) | RunnablePassthrough.assign(cover_letter=cover_letter_chain)
 
-    skills_and_cover_letter = final_chain.invoke({"resume": resume.file})
+    skills_and_cover_letter = await final_chain.ainvoke({"resume": resume.file})
 
     skills = skills_and_cover_letter["profile"]["skills"]
     experience = skills_and_cover_letter["profile"]["experience"]
@@ -97,21 +96,12 @@ def analyze_resume(resume: Resume):
     
 
     print("Creating an agent to fetch relevant job postings and provide personalized recommendations...")
+    # Create main agent
     agent = create_agent(
         model="gpt-5",
         tools=[recommend_jobs],
         system_prompt=f"You are a helpful assistant that scouts and fetches suitable job postings for candidates based on their skill and experience. Candidate skills and experience: {skills}; {experience}",
     )
-
-    # Use the agent to fetch relevant job postings and provide personalized recommendations to the user.
-    agent_response = agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Use the recommend_jobs tool to fetch suitable jobs for the candidate from Jooble based on their skillset and experience, minimum of 50 job postings except results are not up to that but do NOT invent postings. If no jobs match, say so. Do not ask any follow up questions"
-            },
-        ]
-    })
 
     # Separate agent call so the career options come back as their own response
     career_agent = create_agent(
@@ -120,14 +110,25 @@ def analyze_resume(resume: Resume):
         system_prompt=f"You are a career advisor who suggests higher-paying career paths a candidate can move into from their current background. Candidate skills and experience: {skills}; {experience}",
     )
 
-    career_response = career_agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": "Search the internet for similar career options that the candidate can switch to in search of higher pay (include the average annual salary of a junior in the field) and how they can get started from their current skillset. Maximum 10. Do not ask any follow up questions"
-            },
-        ]
-    })
+    # Run both agents concurrently using asyncio.gather(agent1.ainvoke, agent2.ainvoke) to make the process faster 
+    agent_response, career_response = await asyncio.gather(
+        agent.ainvoke({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"Use the recommend_jobs tool to fetch suitable jobs for the candidate from Jooble based on their skillset and experience, minimum of 50 job postings except results are not up to that but do NOT invent postings. If no jobs match, say so. Do not ask any follow up questions"
+                },
+            ]
+        }),
+        career_agent.ainvoke({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Search the internet for similar career options that the candidate can switch to in search of higher pay (include the average annual salary of a junior in the field) and how they can get started from their current skillset. Maximum 10. Do not ask any follow up questions"
+                },
+            ]
+        })
+    ) 
 
     # Collect the real postings from the recommend_jobs tool calls, deduplicated by link
     jobs = []
