@@ -6,8 +6,9 @@ from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.messages import ToolMessage
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 from dotenv import load_dotenv
+from typing import Literal
 import requests
 import asyncio
 
@@ -22,6 +23,9 @@ app = FastAPI()
 
 class Resume(BaseModel):
     file: str
+    provider: Literal["openai", "anthropic", "google_genai"]
+    model: str = Field(min_length=1, max_length=128)
+    api_key: SecretStr = Field(min_length=1)
 
 
 class JobSearch(BaseModel):
@@ -50,7 +54,9 @@ async def analyze_resume(resume: Resume):
     print("Analyzing resume file and extracting relevant information...")
 
     model = init_chat_model(
-        model="gpt-4.1-mini",
+        model=resume.model,
+        model_provider=resume.provider,
+        api_key=resume.api_key.get_secret_value(),
         temperature=0.7,
     )
 
@@ -98,14 +104,14 @@ async def analyze_resume(resume: Resume):
     print("Creating an agent to fetch relevant job postings and provide personalized recommendations...")
     # Create main agent
     agent = create_agent(
-        model="gpt-5",
+        model=model,
         tools=[recommend_jobs],
         system_prompt=f"You are a helpful assistant that scouts and fetches suitable job postings for candidates based on their skill and experience. Candidate skills and experience: {skills}; {experience}",
     )
 
     # Separate agent call so the career options come back as their own response
     career_agent = create_agent(
-        model="gpt-5",
+        model=model,
         tools=[],
         system_prompt=f"You are a career advisor who suggests higher-paying career paths a candidate can move into from their current background. Candidate skills and experience: {skills}; {experience}",
     )

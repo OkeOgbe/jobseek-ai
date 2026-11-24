@@ -1,5 +1,7 @@
 fastapi
 langchain
 langchain-openai
+langchain-anthropic
+langchain-google-genai
 python-dotenv
 requests

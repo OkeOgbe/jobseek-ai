@@ -25,9 +25,10 @@ Without the FastAPI preset, Vercel treats every `.py` file in `api/` as a separa
 
 The frontend posts to the same-origin `/analyze_resume` path, so the deployed request goes directly to the FastAPI app; do not set `API_ORIGIN` to the Vercel project's own URL.
 
-Set these environment variables in Vercel Project Settings:
+Set this environment variable in Vercel Project Settings:
 
-- `OPENAI_API_KEY` for resume analysis and recommendations.
 - `JOOBLE_API_KEY` for job search results.
+
+Users provide their own OpenAI, Anthropic, or Google Gemini API key in the resume form. The key is sent with that analysis request and is not saved by the app. See [BYO_API_KEYS.md](BYO_API_KEYS.md) for the request flow, setup, and security details.
 
 The resume endpoint accepts `POST /analyze_resume` with JSON shaped like `{"file":"extracted resume text"}`. Opening the route directly in a browser sends `GET`, so use the frontend form or send a POST request.

@@ -61,10 +61,32 @@
     .file-types { margin: 13px 0 0; color: var(--muted); font-size: 11px; }
     .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
     .file-name { max-width: 100%; margin: 0 0 13px; overflow: hidden; color: var(--green); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .model-settings { margin-top: 0; display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 12px; font-weight: 700; }
+    .field select, .field input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #c8d3c9; border-radius: 0; background: var(--surface); color: var(--ink); font-size: 13px; }
+    .field-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .submit-actions { margin-top: 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
     .submit { width: 100%; min-height: 48px; margin-top: 20px; padding: 12px 18px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: var(--green); color: white; font-weight: 700; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+    .submit-actions .submit { margin-top: 0; }
     .submit:hover:not(:disabled) { background: #1e4938; transform: translateY(-1px); }
     .submit:disabled { cursor: not-allowed; opacity: .48; }
     .submit svg { width: 17px; height: 17px; }
+    .settings-trigger, .dialog-action { min-height: 48px; padding: 10px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #c8d3c9; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .settings-trigger:hover, .dialog-action:hover { border-color: var(--green); color: var(--green); }
+    .settings-trigger svg { width: 17px; height: 17px; }
+    .settings-dialog { width: min(440px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 24px 80px rgba(32, 42, 37, .22); }
+    .settings-dialog::backdrop { background: rgba(25, 34, 29, .48); backdrop-filter: blur(3px); }
+    .settings-dialog[open] { animation: rise .2s ease-out both; }
+    .settings-form { padding: clamp(22px, 5vw, 32px); }
+    .dialog-heading { margin-bottom: 24px; }
+    .dialog-heading .eyebrow { margin-bottom: 8px; }
+    .dialog-heading h2 { font-family: "DM Serif Display", Georgia, serif; font-size: 27px; font-weight: 400; }
+    .dialog-copy { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .dialog-actions { margin-top: 22px; display: flex; justify-content: flex-end; gap: 9px; }
+    .dialog-actions .submit { width: auto; min-height: 42px; margin: 0; padding: 9px 14px; }
+    .dialog-actions .dialog-action { min-height: 42px; }
+    .dialog-error { min-height: 18px; margin: 0; color: #a24034; font-size: 12px; }
     .privacy { margin: 14px 0 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
     .privacy svg { width: 14px; height: 14px; color: var(--green); flex: none; }
     .result-panel { display: flex; flex-direction: column; }
@@ -143,9 +165,12 @@
           <span class="file-name" id="file-name" hidden></span><span class="browse">Browse files</span>
           <span class="file-types">PDF, DOCX or TXT&nbsp; · &nbsp;up to 10 MB</span>
         </label>
-        <button class="submit" id="submit-button" type="submit" disabled><span>Analyze resume</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="submit-actions">
+          <button class="submit" id="submit-button" type="submit" disabled><span>Analyze resume</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button class="settings-trigger" id="open-settings" type="button" aria-label="Open AI provider settings" title="AI provider settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>AI settings</span></button>
+        </div>
         <p class="status" id="status" role="alert" aria-live="polite"></p>
-        <p class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>Your resume text is sent to the analysis API.</p>
+        <p class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>Your resume is sent to your selected AI provider. Your key is used for this request only.</p>
       </section>
 
       <section class="result-panel" aria-labelledby="result-heading">
@@ -159,12 +184,53 @@
     </form>
   </main>
 
+  <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
+    <form class="settings-form" id="settings-form">
+      <div class="dialog-heading">
+        <p class="eyebrow">Personal model</p>
+        <h2 id="settings-title">AI provider settings</h2>
+        <p class="dialog-copy">Choose the model for this page session. Your key stays in memory until you close or reload this page.</p>
+      </div>
+      <div class="model-settings">
+        <div class="field">
+          <label for="provider">AI provider</label>
+          <select id="provider" name="provider" required>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="google_genai">Google Gemini</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="model">Model</label>
+          <input id="model" name="model" type="text" value="gpt-4.1-mini" maxlength="128" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="api-key">API key</label>
+          <input id="api-key" name="api-key" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="key-hint">
+          <p class="field-hint" id="key-hint">Enter a key to add or replace it. Leave blank to keep the current page-session key.</p>
+        </div>
+        <p class="dialog-error" id="settings-error" role="alert" aria-live="polite"></p>
+      </div>
+      <div class="dialog-actions">
+        <button class="dialog-action" id="cancel-settings" type="button">Cancel</button>
+        <button class="submit" type="submit">Save settings</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     const form = document.querySelector("#resume-form");
     const fileInput = document.querySelector("#resume-file");
     const dropzone = document.querySelector("#dropzone");
     const fileName = document.querySelector("#file-name");
     const submitButton = document.querySelector("#submit-button");
+    const providerInput = document.querySelector("#provider");
+    const modelInput = document.querySelector("#model");
+    const apiKeyInput = document.querySelector("#api-key");
+    const settingsDialog = document.querySelector("#settings-dialog");
+    const settingsForm = document.querySelector("#settings-form");
+    const settingsError = document.querySelector("#settings-error");
+    const openSettingsButton = document.querySelector("#open-settings");
     const status = document.querySelector("#status");
     const resultContent = document.querySelector("#result-content");
     const emptyState = document.querySelector("#empty-state");
@@ -174,6 +240,7 @@
     const copyCoverLetterButton = document.querySelector("#copy-cover-letter");
     const copyCoverLetterLabel = copyCoverLetterButton.querySelector("span");
     let copyResetTimer;
+    let sessionApiKey = "";
     const jobPager = document.querySelector("#job-pager");
     const jobCount = document.querySelector("#job-count");
     const showMoreJobsButton = document.querySelector("#show-more-jobs");
@@ -182,6 +249,39 @@
     let visibleJobCount = jobsPageSize;
     const allowedExtensions = new Set(["pdf", "docx", "txt"]);
     const maxFileSize = 10 * 1024 * 1024;
+    const providerDefaults = {
+      openai: "gpt-4.1-mini",
+      anthropic: "claude-sonnet-4-5-20250929",
+      google_genai: "gemini-2.5-flash"
+    };
+
+    providerInput.addEventListener("change", () => {
+      modelInput.value = providerDefaults[providerInput.value];
+    });
+
+    openSettingsButton.addEventListener("click", () => {
+      settingsError.textContent = "";
+      settingsDialog.showModal();
+    });
+    document.querySelector("#cancel-settings").addEventListener("click", () => settingsDialog.close());
+    settingsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (apiKeyInput.value.trim()) sessionApiKey = apiKeyInput.value.trim();
+      if (!sessionApiKey) {
+        settingsError.textContent = "Enter an API key to continue.";
+        apiKeyInput.focus();
+        return;
+      }
+      if (!modelInput.value.trim()) {
+        settingsError.textContent = "Enter a model name.";
+        modelInput.focus();
+        return;
+      }
+      apiKeyInput.value = "";
+      settingsError.textContent = "";
+      submitButton.disabled = !fileInput.files[0];
+      settingsDialog.close();
+    });
 
     function parseSkills(value) {
       if (Array.isArray(value)) return value.map(String).map((skill) => skill.trim()).filter(Boolean);
@@ -355,10 +455,16 @@
       setFile(file);
     });
 
+    if (!sessionApiKey) settingsDialog.showModal();
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const file = fileInput.files[0];
       if (!file) return;
+      if (!sessionApiKey) {
+        settingsDialog.showModal();
+        return;
+      }
       status.textContent = "";
       submitButton.disabled = true;
       emptyState.hidden = true;
@@ -371,7 +477,12 @@
         const response = await fetch("/analyze_resume", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ file: resumeText })
+          body: JSON.stringify({
+            file: resumeText,
+            provider: providerInput.value,
+            model: modelInput.value.trim(),
+            api_key: sessionApiKey
+          })
         });
         let payload;
         try {
